@@ -1,0 +1,192 @@
+---
+title: "Statistical Inference Course Project"
+author: "Saurabh Thakur"
+date: "10 June 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Peer Graded assignment.
+
+
+```{r setwrkdir, echo=TRUE}
+setwd("E:/R/coursera/Assignments/Statistical Inference")
+set.seed(18746)
+```
+
+##Instructions
+
+### There are two sections of the project
+1. A simulation exercise.
+2. Basic inferential data analysis.
+
+## 1. A simulation exercise.
+
+###Overview
+
+In this project you will investigate the exponential distribution in R and compare it with the Central Limit Theorem. The exponential distribution can be simulated in R with rexp(n, lambda) where lambda is the rate parameter.The mean of exponential distribution is 1/lambda and the standard deviation is also 1/lambda. Set lambda = 0.2 for all of the simulations. You will investigate the distribution of averages of 40 exponentials. Note that you will need to do a thousand simulations.
+
+### Illustrate via simulation and associated explanatory text the properties of the distribution of the mean of 40 exponentials. 
+
+### 1. Show the sample mean and compare it to the theoretical mean of the distribution.
+
+```{r q1, echo=TRUE}
+n <- 40
+Simulations <- 1000
+Lambda <- 0.2
+
+SampleMean <- NULL
+for(i in 1:Simulations) {
+  SampleMean <- c(SampleMean, mean(rexp(n, Lambda)))
+}
+mean(SampleMean)
+
+theo_mean <- 1 / Lambda
+theo_mean
+
+```
+Looking at the values of both sample mean and theoretical mean we see that they are very close.
+
+### 2. Show how variable the sample is (via variance) and compare it to the theoretical variance of the distribution.
+
+Sample Variance is the variance of the Sample mean.
+
+```{r q2, echo=TRUE}
+variance<- var(SampleMean)
+variance
+```
+
+Theoretical variance of exponential distribution is (lambda*sqrt(n))^-2
+```{r q2_2, echo=TRUE}
+theo_var <- (Lambda*(sqrt(n)))^-2
+theo_var
+```
+Looking at the values fo both Sample variance and Theoretical variance we see that they both are very close.
+
+### 3. Show that the distribution is approximately normal.
+
+```{r q3, echo=TRUE}
+
+hist(SampleMean, 
+     breaks = n, 
+     prob = T, 
+     col = "cyan", 
+     xlab = "Means")
+
+x <- seq(min(SampleMean), max(SampleMean), length = 100)
+
+lines(x, 
+      dnorm(x, 
+            mean = 1/Lambda, 
+            sd = (1/Lambda/sqrt(n))), 
+      pch = 25, 
+      col = "red")
+
+qqnorm(SampleMean)
+qqline(SampleMean, col = "red")
+
+```
+
+## 2. Basic inferential data analysis.
+
+### Overview
+
+The purpose of the this data analysis is to analyze the ToothGrowth data set by comparing the guinea tooth growth by supplement and dose. I will do the exploratory data analysis on the data set and then will compare with confidence intervals in order to make conclusions about the tooth growth.
+
+### ..1. Load the ToothGrowth data and perform some basic exploratory data analyses
+
+```{r q4, ecgo=TRUE}
+library(datasets)
+data(ToothGrowth)
+library(ggplot2)
+```
+### ..2 Provide a basic summary of the data.
+
+```{r q41,echo=TRUE}
+str(ToothGrowth)
+head(ToothGrowth)
+summary(ToothGrowth)
+
+ggplot(data=ToothGrowth, 
+       aes(x=as.factor(dose), 
+           y=len, 
+           fill=supp)) +
+    geom_bar(stat="identity") +
+    facet_grid(. ~ supp) +
+    xlab("Dose(mg)") +
+    ylab("Tooth length")
+
+```
+
+The box plots seem to show, increasing the dosage increases the tooth growth. Orange juice is more effective than ascorbic acid for tooth growth when the dosage is .5 to 1.0 milligrams per day. Both types of supplements are equally as effective when the dosage is 2.0 milligrams per day.
+
+
+### ..3. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering).###
+
+
+####Hypothesis #1####
+
+**Orange juice & ascorbic acid deliver the same tooth growth across the data set.** 
+
+```{r h1, echo=TRUE}
+hypoth1 <- t.test(len ~ supp, data = ToothGrowth)
+hypoth1$conf.int
+hypoth1$p.value
+```
+
+_The confidence intervals includes 0 and the p-value is greater than the threshold of 0.05. The null hypothesis cannot be rejected._
+
+####Hypothesis #2####
+
+**For the dosage of 0.5 mg/day, the two supplements deliver the same tooth growth.**
+
+```{r h2, echo=TRUE}
+hypoth2<-t.test(len ~ supp, data = subset(ToothGrowth, dose == 0.5))
+hypoth2$conf.int
+hypoth2$p.value
+```
+
+_The confidence interval does not include 0 and the p-value is below the 0.05 threshold. The null hypothesis can be rejected. The alternative hypothesis that 0.5 mg/day dosage of orange juice delivers more tooth growth than ascorbic acid is accepted._
+
+####Hypothesis #3####
+
+**For the dosage of 1 mg/day, the two supplements deliver the same tooth growth**
+
+```{r h3, echo=TRUE}
+hypoth3<-t.test(len ~ supp, data = subset(ToothGrowth, dose == 1))
+hypoth3$conf.int
+hypoth3$p.value
+```
+_The confidence interval does not include 0 and the p-value is smaller than the 0.05 threshold. The null hypothesis can be rejected. The alternative hypothesis that 1 mg/day dosage of orange juice delivers more tooth growth than ascorbic acid is accepted._
+
+####Hypothesis #4####
+
+**For the dosage of 2 mg/day, the two supplements deliver the same tooth growth**
+```{r h4, echo=TRUE}
+hypoth4<-t.test(len ~ supp, data = subset(ToothGrowth, dose == 2))
+hypoth4$conf.int
+hypoth4$p.value
+```
+_The confidence interval does include 0 and the p-value is larger than the 0.05 threshold. The null hypothesis cannot be rejected._
+
+
+### ..4. State your conclusions and the assumptions needed for your conclusions.
+
+**Conclusions & assumptions**
+
++ Orange juice delivers more tooth growth than ascorbic acid for dosages 0.5 & 1.0.
++ Orange juice and ascorbic acid deliver the same amount of tooth growth for dose amount 2.0 mg/day. 
++ For the entire data set we cannot conclude orange juice is more effective that ascorbic acid.
+
+**Assumptions**
+
++ Normal distribution of the tooth lengths
++ No other unmeasured factors are affecting tooth length
+
+
+
+
+__END__
